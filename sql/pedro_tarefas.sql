@@ -1,10 +1,8 @@
--- ==========================================================
 -- PROJETO 1 - BANCO DE DADOS (SISTEMAS DE INFORMAÇÃO)
 -- MEMBRO DO GRUPO: PEDRO HENRIQUE GOUVEIA
--- TAREFAS: VIEWS, PROCEDURES, FUNCTIONS E TRIGGERS [cite: 208]
--- ==========================================================
+-- TAREFAS: VIEWS, PROCEDURES, FUNCTIONS E TRIGGERS
 
--- 1. View para ver o rendimento das turmas [cite: 34-35, 208]
+-- View de desempenho por turma
 CREATE VIEW vw_DesempenhoTurma AS
 SELECT 
     d.NomeDisciplina, 
@@ -18,9 +16,9 @@ JOIN Professores p ON t.ID_Professor = p.ID_Professor
 JOIN Matriculas m ON t.ID_Turma = m.ID_Turma
 GROUP BY t.ID_Turma;
 
--- 2. Procedure para o Histórico do Aluno [cite: 57-61, 208]
+-- Procedure pra gerar o histórico do aluno (só insere o que ainda não tá lá)
 DELIMITER //
-CREATE PROCEDURE sp_GerarHistoricoAluno(IN p_ID_Aluno INT)
+CREATE PROCEDURE sp_HistoricoAluno(IN p_ID_Aluno INT)
 BEGIN
     INSERT INTO HistoricoAluno (ID_Aluno, ID_Disciplina, NotaFinal, Status, DataConclusao)
     SELECT m.ID_Aluno, t.ID_Disciplina, m.NotaFinal, m.Status, CURDATE()
@@ -34,24 +32,24 @@ BEGIN
 END //
 DELIMITER ;
 
--- 3. Função para contar matérias que faltam [cite: 67, 208]
+-- Retorna quantas disciplinas o aluno ainda não concluiu no curso
 DELIMITER //
-CREATE FUNCTION fn_ContarDisciplinasPendentes(p_ID_Aluno INT, p_ID_Curso INT) 
+CREATE FUNCTION fn_DisciplinasPendentes(p_ID_Aluno INT, p_ID_Curso INT) 
 RETURNS INT DETERMINISTIC
 BEGIN
-    DECLARE v_pendentes INT;
-    SELECT COUNT(*) INTO v_pendentes
+    DECLARE total INT;
+    SELECT COUNT(*) INTO total
     FROM Disciplinas_Curriculo dc
     JOIN Curriculos c ON dc.ID_Curriculo = c.ID_Curriculo
     WHERE c.ID_Curso = p_ID_Curso
       AND dc.ID_Disciplina NOT IN (
           SELECT ID_Disciplina FROM HistoricoAluno WHERE ID_Aluno = p_ID_Aluno AND Status = 'Aprovado'
       );
-    RETURN v_pendentes;
+    RETURN total;
 END //
 DELIMITER ;
 
--- 4. Trigger de Auditoria de E-mail [cite: 82-85, 208]
+-- Trigger pra logar quando o e-mail do aluno mudar
 DELIMITER //
 CREATE TRIGGER trg_AuditoriaAluno
 AFTER UPDATE ON Alunos
